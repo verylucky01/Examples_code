@@ -2,22 +2,39 @@ from sklearn.metrics import accuracy_score
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 
+from mothernet.utils import get_mn_model
 from mothernet.prediction import MotherNetClassifier, EnsembleMeta
 
-X, y = load_breast_cancer(return_X_y=True)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.33, random_state=42
-)
 
-# MotherNetClassifier encapsulates a single instantiation of the model.
+def train_and_evaluate(device="cpu", test_size=0.33, random_state=42):
 
-classifier = MotherNetClassifier(device="cpu", model_path="path/to/model.pkl")
+    # 加载数据集并划分训练集和测试集：
+    X, y = load_breast_cancer(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=random_state
+    )
 
-classifier.fit(X_train, y_train)
-y_eval, p_eval = classifier.predict(X_test, return_winning_probability=True)
+    # 模型参数的检查点文件路径：
+    model_string = "mn_d2048_H4096_L2_W32_P512_1_gpu_warm_08_25_2023_21_46_25_epoch_3940_no_optimizer.pickle"
+    model_path = get_mn_model(model_string)
+    # 初始化分类器模型：
+    classifier = MotherNetClassifier(device=device, path=model_path)
 
-print("Accuracy", accuracy_score(y_test, y_eval))
+    # 模型训练：
+    classifier.fit(X_train, y_train)
 
-# Ensembling as described in the TabPFN paper an be performed using the EnsembleMeta wrapper
-ensemble_classifier = EnsembleMeta(classifier)
-# ...
+    # 模型预测与评估：
+    y_eval = classifier.predict(X_test)
+    accuracy = accuracy_score(y_test, y_eval)
+    print("Accuracy", accuracy)
+
+    # 请注意，MotherNetClassifier 并不进行任何集成，你需要使用 EnsembleMeta 来获得论文所述的集成。
+    # 集成学习：
+    ensemble_classifier = EnsembleMeta(classifier)
+    # 集成学习的具体实现可以在这里添加：
+
+    return accuracy, ensemble_classifier
+
+
+# 调用函数进行训练和评估：
+train_and_evaluate(device="cpu")
