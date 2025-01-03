@@ -11,12 +11,15 @@ def get_completions(prompt, system_prompt):
     # 简单修改配置即可利用 OpenAI SDK 访问 DeepSeek API，或者使用其他与 OpenAI API 兼容的软件。
     client = OpenAI(
         api_key="sk-your_api_key******************************************",
-        base_url="https://api.deepseek.com/v1",
+        base_url="https://api.deepseek.com",
         timeout=60,
         max_retries=3,
     )
+    # deepseek-chat 和 deepseek-coder：
+    print(client.models.list())
+
     response = client.chat.completions.create(
-        model="deepseek-coder",
+        model="deepseek-coder",  # deepseek-chat 和 deepseek-coder
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
